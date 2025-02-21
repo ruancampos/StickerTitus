@@ -1,10 +1,11 @@
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { useState, useRef } from "react"; // <-  é um hook do React para gerenciar estados em componentes funcionais.
 import * as ImagePicker from "expo-image-picker"; // <- é uma biblioteca do Expo que permite selecionar imagens da galeria ou câmera do dispositivo.
 import { type ImageSource } from "expo-image";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as MediaLibrary from "expo-media-library";
 import { captureRef } from "react-native-view-shot";
+import domtoimage from "dom-to-image";
 
 // imports dos componentes personalizados localizados na pasta components do projeto.
 import Button from "@/components/Button";
@@ -62,19 +63,37 @@ export default function Index() {
     setIsModalVisible(false);
   };
   const onSaveImageAsync = async () => {
-    try {
-      const localUri = await captureRef(imageRef, {
-        height: 400,
-        quality: 1,
-      });
-     
-     await MediaLibrary.saveToLibraryAsync(localUri);
-     if (localUri) {
-      alert("saved!");
-     }
-    }
-    catch (error) {
-      console.log(error);
+    if (Platform.OS !== "web") {
+      try {
+        const localUri = await captureRef(imageRef, {
+          height: 400,
+          quality: 1,
+        });
+
+        await MediaLibrary.saveToLibraryAsync(localUri);
+        if (localUri) {
+          alert("saved!");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    } else {
+      try {
+        //@ts-ignore
+        const dataUrl = await domtoimage.toJpeg(imageRef.current, {
+          quality: 0.95,
+          width: 320,
+          height: 440,
+        });
+
+        let link =document.createElement("a");
+        link.download = "sticker-titus.jpeg";
+        link.href = dataUrl;
+        link.click();
+
+      } catch (error) {
+        console.log(error);
+      }
     }
   };
 
